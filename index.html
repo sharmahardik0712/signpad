@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature Pad</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 10px;
+    }
+    #colorDisplay {
+        margin-bottom: 20px;
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        vertical-align: middle;
+        cursor: pointer;
+    }
+    #colorPicker {
+        position: absolute;
+        display: none;
+        z-index: 1000;
+    }
+    #signatureCanvas {
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        cursor: crosshair;
+    }
+    #downloadBtn,
+    #clearBtn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #4CAF50;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-align: center;
+        text-decoration: none;
+        margin-bottom: 10px;
+    }
+    #downloadBtn:hover,
+    #clearBtn:hover {
+        background-color: #45a049;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Signature Pad</h1>
+    <label>Select Text Color:</label>
+    <div id="colorPickerContainer">
+        <div id="colorDisplay" onclick="openColorPicker(event)"></div>
+        <input type="color" id="colorPicker">
+    </div>
+    <canvas id="signatureCanvas" width="600" height="300"></canvas>
+    <button id="downloadBtn">Download Signature as PNG</button>
+    <button id="clearBtn">Clear Signature</button>
+</div>
+
+<script>
+    var canvas = document.getElementById("signatureCanvas");
+    var ctx = canvas.getContext("2d");
+
+    var colorPicker = document.getElementById("colorPicker");
+
+    function openColorPicker(event) {
+        var x = event.clientX;
+        var y = event.clientY;
+        colorPicker.style.left = x + "px";
+        colorPicker.style.top = y + "px";
+        colorPicker.style.display = "block";
+    }
+
+    colorPicker.addEventListener("change", function() {
+        var selectedColor = colorPicker.value;
+        colorPicker.style.display = "none";
+        colorDisplay.style.backgroundColor = selectedColor;
+        ctx.strokeStyle = selectedColor;
+    });
+
+    canvas.addEventListener("mousemove", function(event) {
+        if (event.buttons === 1) {
+            ctx.lineTo(event.offsetX, event.offsetY);
+            ctx.stroke();
+        }
+    });
+
+    canvas.addEventListener("mousedown", function(event) {
+        ctx.beginPath();
+        ctx.moveTo(event.offsetX, event.offsetY);
+        ctx.lineWidth = 2;
+    });
+
+    canvas.addEventListener("mouseup", function() {
+        ctx.closePath();
+    });
+
+    clearBtn.addEventListener("click", function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    downloadBtn.addEventListener("click", function() {
+        var dataURL = canvas.toDataURL("image/png");
+        var a = document.createElement("a");
+        a.href = dataURL;
+        a.download = "signature.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+
+    document.addEventListener("click", function(event) {
+        if (event.target !== colorPicker && event.target !== colorDisplay) {
+            colorPicker.style.display = "none";
+        }
+    });
+</script>
+</body>
+</html>
