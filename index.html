@@ -27,26 +27,12 @@
         display: block;
         margin-bottom: 10px;
     }
-    #colorDisplay {
-        margin-bottom: 20px;
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        vertical-align: middle;
-        cursor: pointer;
-    }
-    #colorPicker {
-        position: absolute;
-        display: none;
-        z-index: 1000;
-    }
     #signatureCanvas {
         border: 2px solid #ccc;
         border-radius: 8px;
         margin-bottom: 20px;
         cursor: crosshair;
+        touch-action: none; /* Prevent default touch actions on canvas */
     }
     #downloadBtn,
     #clearBtn {
@@ -72,11 +58,6 @@
 <body>
 <div class="container">
     <h1>Signature Pad</h1>
-    <label>Select Text Color:</label>
-    <div id="colorPickerContainer">
-        <div id="colorDisplay" onclick="openColorPicker(event)"></div>
-        <input type="color" id="colorPicker">
-    </div>
     <canvas id="signatureCanvas" width="600" height="300"></canvas>
     <button id="downloadBtn">Download Signature as PNG</button>
     <button id="clearBtn">Clear Signature</button>
@@ -85,40 +66,16 @@
 <script>
     var canvas = document.getElementById("signatureCanvas");
     var ctx = canvas.getContext("2d");
+    var isDrawing = false;
 
-    var colorPicker = document.getElementById("colorPicker");
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", continueDrawing);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseleave", stopDrawing);
 
-    function openColorPicker(event) {
-        var x = event.clientX;
-        var y = event.clientY;
-        colorPicker.style.left = x + "px";
-        colorPicker.style.top = y + "px";
-        colorPicker.style.display = "block";
-    }
-
-    colorPicker.addEventListener("change", function() {
-        var selectedColor = colorPicker.value;
-        colorPicker.style.display = "none";
-        colorDisplay.style.backgroundColor = selectedColor;
-        ctx.strokeStyle = selectedColor;
-    });
-
-    canvas.addEventListener("mousemove", function(event) {
-        if (event.buttons === 1) {
-            ctx.lineTo(event.offsetX, event.offsetY);
-            ctx.stroke();
-        }
-    });
-
-    canvas.addEventListener("mousedown", function(event) {
-        ctx.beginPath();
-        ctx.moveTo(event.offsetX, event.offsetY);
-        ctx.lineWidth = 2;
-    });
-
-    canvas.addEventListener("mouseup", function() {
-        ctx.closePath();
-    });
+    canvas.addEventListener("touchstart", startDrawingTouch);
+    canvas.addEventListener("touchmove", continueDrawingTouch);
+    canvas.addEventListener("touchend", stopDrawing);
 
     clearBtn.addEventListener("click", function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -134,11 +91,50 @@
         document.body.removeChild(a);
     });
 
-    document.addEventListener("click", function(event) {
-        if (event.target !== colorPicker && event.target !== colorDisplay) {
-            colorPicker.style.display = "none";
+    function startDrawing(event) {
+        isDrawing = true;
+        var { offsetX, offsetY } = getOffset(event);
+        ctx.beginPath();
+        ctx.moveTo(offsetX, offsetY);
+    }
+
+    function continueDrawing(event) {
+        if (isDrawing) {
+            var { offsetX, offsetY } = getOffset(event);
+            ctx.lineTo(offsetX, offsetY);
+            ctx.stroke();
         }
-    });
+    }
+
+    function startDrawingTouch(event) {
+        event.preventDefault();
+        isDrawing = true;
+        var touch = event.touches[0];
+        var { offsetX, offsetY } = getOffset(touch);
+        ctx.beginPath();
+        ctx.moveTo(offsetX, offsetY);
+    }
+
+    function continueDrawingTouch(event) {
+        event.preventDefault();
+        if (isDrawing) {
+            var touch = event.touches[0];
+            var { offsetX, offsetY } = getOffset(touch);
+            ctx.lineTo(offsetX, offsetY);
+            ctx.stroke();
+        }
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+    function getOffset(event) {
+        var rect = canvas.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        return { offsetX: x, offsetY: y };
+    }
 </script>
 </body>
 </html>
